@@ -46,9 +46,78 @@ $sql = "CREATE TABLE IF NOT EXISTS Combats (
     FOREIGN KEY (boxeur1_id) REFERENCES Boxeurs(id),
     FOREIGN KEY (boxeur2_id) REFERENCES Boxeurs(id)
 )";
+
 if ($conn->query($sql) === TRUE) {
     echo "Table Combats créée avec succès.\n";
 } else {
     echo "Erreur lors de la création de la table Combats: " . $conn->error;
 }
+
+//creation de la table Journalistes
+$sql = "CREATE TABLE Journalistes ( 
+
+id INT AUTO_INCREMENT PRIMARY KEY,
+username varchar(30),
+passwd varchar(30),
+)";
+
+if ($conn->query($sql) === TRUE) {
+
+    echo "Table des Journalistes créé avec succes.\n";
+} else {
+    echo "Erreur lors de la création de la table Journalistes: " . $conn->error;
+}
+
+//creation de la table Statistiques
+
+$sql = "CREATE TABLE IF NOT EXISTS Statistiques (
+
+id INT AUTO_INCREMENT PRIMARY KEY,
+Combat INT,
+Boxeur varchar(40),
+Coups_Portés INT,
+Coups_Encaissés INT,
+Rounds INT,
+Precision INT,
+)";
+
+if ($conn->query($sql) === TRUE) {
+
+    echo "Table des Statistiques créé avec succes.\n";
+} else {
+    echo "Erreur lors de la création de la table Statistiques: " . $conn->error;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
