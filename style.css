@@ -1,0 +1,205 @@
+@font-face {
+    font-family: 'Bell MT';
+    src: url('fonts/BellMT.woff2') format('woff2'),
+         url('fonts/BellMT.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+body {
+
+    font-family: 'Bell MT', serif;
+    margin: 0;
+    padding: 0;
+    background-color: rgb(69, 27, 27);
+    color: white;
+}
+header {
+    background: rgba(64, 16, 34, 0.8);
+    padding: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Navigation */
+nav {
+    margin-top: 10px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 15px;
+    font-weight: bold;
+}
+
+nav a:hover {
+    color: #643656;
+}
+
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+}
+
+.hero {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+}
+
+.hero video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.matchs-container, table {
+    width: 80%;
+    margin: 20px auto;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid white;
+    text-align: center;
+    
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background: #000000;
+    margin-top: 20px;
+}
+#classement {
+    margin-top: 50px;
+    text-align: center;
+}
+
+.classement-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.classement-boxeur {
+   
+    background-image: url(c8.jpg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 15px;
+    padding: 70px;
+    text-align: center;
+    width: 200px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease-in-out;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.classement-boxeur:hover {
+    transform: scale(1.05);
+}
+
+.classement-boxeur h3 {
+    font-size: 1.5rem;
+    margin: 10px 0;
+    color: #fff;
+}
+
+.classement-boxeur p {
+    color: #ccc;
+}
+#matchs {
+    margin-top: 50px;
+    text-align: center;
+}
+
+.matchs-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.match {
+    background-image: url(1.jpg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+   
+    border-radius: 15px;
+    padding: 70px;
+    width: 100px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease-in-out;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.match:hover {
+    transform: scale(1.05);
+}
+
+.match .boxeur {
+    display: inline-block;
+    margin: 10px;
+    width: 120px;
+    height: 120px;
+}
+
+.match .boxeur img {
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.match .versus {
+    margin: 20px 0;
+    font-size: 2rem;
+    color: #fff;
+    font-weight: bold;
+}
+
+.match h3 {
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+.match p {
+    color: #ccc;
+}
