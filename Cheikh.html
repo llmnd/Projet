@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournoi de boxe</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <header>
+        <h1>Espace arbitre</h1>
+    </header>
+
+    <nav> 
+        <button onclick="showSection('combat_assignes')">Combat Assignés</button>
+        <button onclick="showSection('saisie_resultats')">Saisie des résultats</button>
+        <button onclick="showSection('historique_combat')">Historique de combat</button>
+        <button onclick="logout()">Déconnexion</button>
+    </nav>
+
+    <div id="combat_assignes" class="content-section">
+        <h2>Combat assignés</h2>    
+        <table>
+            <tr>
+                <th>Date et heure</th>
+                <th>Boxeur 1</th>
+                <th>Boxeur 2</th>
+                <th>Phase</th>
+                <th>Statut</th>
+            </tr>
+            <tr>
+                <td>2025-02-18 19:00</td>
+                <td>Mohamed Ndiaye (poids lourd)</td>
+                <td>Mike Tyson (poids lourd)</td>
+                <td>Quarts de finale</td>
+                <td>À venir</td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="saisie_resultats" class="content-section">
+        <h2>Saisie des résultats</h2>
+        <form id="resultForm">
+            <label for="date_debut">Date et heure de début :</label>
+            <input type="datetime-local" id="date_debut" name="date_debut" required>
+
+            <label for="date_fin">Heure de fin :</label>
+            <input type="time" id="date_fin" name="date_fin" required>
+
+            <h2>Statistiques par round</h2>
+            <label for="round">Sélectionnez un round :</label>
+            <select id="round" name="round" onchange="loadRoundStats()">
+                <option value="1">Round 1</option>
+                <option value="2">Round 2</option>
+                <option value="3">Round 3</option>
+            </select>
+
+            <h3>Saisie des statistiques</h3>
+            <label for="coups_portes">Coups portés :</label>
+            <input type="number" id="coups_portes" name="coups_portes" value="<?php echo isset($_GET['coups_portes']) ? htmlspecialchars($_GET['coups_portes']) : ; ?>" required>
+
+            <label for="coups_recus">Coups reçus :</label>
+            <input type="number" id="coups_recus" name="coups_recus" value="<?php echo isset($_GET['coups_recus']) ? htmlspecialchars($_GET['coups_recus']) : ; ?>" required> 
+
+
+            <label for="takedowns">Takedowns :</label>
+            <input type="number" id="takedowns" name="takedowns" value="<?php echo isset($_GET['takedowns']) ? htmlspecialchars($_GET['takedowns']) : ; ?>" required> 
+
+            <label for="knockdowns">Knockdowns :</label>
+            <input type="number" id="knockdowns" name="knockdowns" value="<?php echo isset($_GET['knockdowns']) ? htmlspecialchars($_GET['knockdowns']) : ; ?>"required> 
+
+            <button type="button" onclick="saveRoundStats()">Enregistrer les statistiques</button>
+
+            <label for="vainqueur">Vainqueur :</label>
+            <select id="vainqueur" name="vainqueur"> 
+                <option value="Mohamed Ndiaye">Mohamed Ndiaye</option>
+                <option value="Mike Tyson">Mike Tyson</option>
+            </select> 
+
+            <label for="mode_victoire">Mode de victoire :</label>
+            <select id="mode_victoire" name="mode_victoire">
+                <option value="KO">KO</option>
+                <option value="TKO">TKO</option>
+                <option value="Decision">Décision</option>
+                <option value="Abandon">Abandon</option>
+                <option value="Disqualification">Disqualification</option>
+            </select>
+
+            <h2>Commentaires</h2>
+            <textarea id="commentaires" rows="4" placeholder="Ajoutez un commentaire..."></textarea>
+
+            <button type="button" onclick="validerResultat()">Valider le résultat</button>
+        </form>
+    </div>
+
+    <div id="historique_combat" class="content-section">
+        <h2>Historique des combats</h2>
+        <div id="historique_container"></div>
+        <div id="details_combat" style="display: none;"></div>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => section.style.display = 'none');
+            document.getElementById(sectionId).style.display = 'block';
+        }
+
+        function logout() {
+            alert('Déconnexion réussie');
+            window.location.href = 'index.html';
+        }
+
+        function saveRoundStats() {
+            let round = document.getElementById("round").value;
+            let stats = {
+                coups_portes: document.getElementById("coups_portes").value,
+                coups_recus: document.getElementById("coups_recus").value,
+                takedowns: document.getElementById("takedowns").value,
+                knockdowns: document.getElementById("knockdowns").value
+            };
+            localStorage.setItem("round_" + round, JSON.stringify(stats));
+        }
+
+        function validerResultat() {
+            let vainqueur = document.getElementById("vainqueur").value;
+            let modeVictoire = document.getElementById("mode_victoire").value;
+            let commentaires = document.getElementById("commentaires").value;
+            let combats = JSON.parse(localStorage.getItem("historique_combats")) || [];
+            combats.push({ vainqueur, modeVictoire, commentaires });
+            localStorage.setItem("historique_combats", JSON.stringify(combats));
+            afficherHistorique();
+        }
+
+        function afficherHistorique() {
+            let historiqueContainer = document.getElementById("historique_container");
+            historiqueContainer.innerHTML = "";
+            let combats = JSON.parse(localStorage.getItem("historique_combats")) || [];
+            combats.forEach((combat, index) => {
+                let combatBtn = document.createElement("button");
+                combatBtn.textContent = `Combat ${index + 1}`;
+                combatBtn.onclick = () => afficherDetailsCombat(combat);
+                historiqueContainer.appendChild(combatBtn);
+            });
+        }
+
+        function afficherDetailsCombat(combat) {
+            let detailsContainer = document.getElementById("details_combat");
+            detailsContainer.innerHTML = `<h3>Détails du combat</h3>
+                                          <p>Vainqueur : ${combat.vainqueur}</p>
+                                          <p>Mode de victoire : ${combat.modeVictoire}</p>
+                                          <p>Commentaires : ${combat.commentaires}</p>`;
+            detailsContainer.style.display = 'block';
+        }
+
+         // Fonction pour charger les statistiques du round
+        function loadRoundStats() {
+            let round = document.getElementById("round").value;
+            let stats = JSON.parse(localStorage.getItem("round_" + round));
+            if (stats) {
+                document.getElementById("coups_portes").value = stats.coups_portes;
+                document.getElementById("coups_recus").value = stats.coups_recus;
+                document.getElementById("takedowns").value = stats.takedowns;
+                document.getElementById("knockdowns").value = stats.knockdowns;
+            } else {
+                // Si aucune donnée trouvée, réinitialise les champs
+                document.getElementById("coups_portes").value = "";
+                document.getElementById("coups_recus").value = "";
+                document.getElementById("takedowns").value = "";
+                document.getElementById("knockdowns").value = "";
+            }
+        }
+
+        // Lors du chargement de la page, charge les statistiques par défaut
+        document.addEventListener("DOMContentLoaded", loadRoundStats);
+
+        document.addEventListener("DOMContentLoaded", afficherHistorique);
+    </script>
+</body>
+</html>
