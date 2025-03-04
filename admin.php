@@ -97,6 +97,7 @@ $arbitres = $mysqli->query("SELECT id, username FROM arbitres");
     <meta charset="UTF-8">
     <title>Admin - WBSS</title>
     <link rel="stylesheet" href="admin.css">
+    <a href="h.php" class="btn-home">Retour à l'Accueil</a>
 </head>
 <body>
     <h1>Gestion du Tournoi</h1>
@@ -153,7 +154,7 @@ $arbitres = $mysqli->query("SELECT id, username FROM arbitres");
                             // Réinitialiser les résultats des arbitres à chaque itération
                             $arbitres->data_seek(0);
                             while ($arbitre = $arbitres->fetch_assoc()) { ?>
-                                <option value="<?= $arbitre['id'] ?>"><?= $arbitre['nom'] ?></option>
+                                <option value="<?= $arbitre['id'] ?>"><?= $arbitre['username'] ?></option>
                             <?php } ?>
                         </select>
                         <input type="datetime-local" name="date_combat" value="<?= date('Y-m-d\TH:i', strtotime($row['date_combat'])) ?>" required>
@@ -165,7 +166,9 @@ $arbitres = $mysqli->query("SELECT id, username FROM arbitres");
                     </form>
                 </td>
             </tr>
+            
         <?php } ?>
     </table>
 </body>
 </html>
+
