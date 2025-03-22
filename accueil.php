@@ -40,7 +40,7 @@ $result = $mysqli->query($query);
     </header>
     
     <section id="matchs">
-        <h2>Prochains Matchs</h2>
+        <h2> Matchs Précédents</h2>
         <div class="matchs-container">
             <?php 
             if ($result->num_rows > 0) {
