@@ -2,116 +2,112 @@
 session_start();
 require 'db.php';
 
-// Récupérer les informations du match à modifier
-$id = $_GET['id'] ?? null;
-if (!$id) {
-    die("ID du match non spécifié.");
+// Initialiser le tournoi
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['init_tournoi'])) {
+    mysqli_query($link, "TRUNCATE TABLE matches");
+    $phases = ['8eme' => 8, 'quart' => 4, 'demi' => 2, 'finale' => 1];
+    $stmt = mysqli_prepare($link, "INSERT INTO matches (boxeur1, boxeur2, phase) VALUES (NULL, NULL, ?)");
+    foreach ($phases as $phase => $count) {
+        for ($i = 0; $i < $count; $i++) {
+            mysqli_stmt_bind_param($stmt, 's', $phase);
+            mysqli_stmt_execute($stmt);
+        }
+    }
+    header('Location: tournoi_admin.php');
+    exit;
 }
 
-$query = mysqli_query($link, "SELECT * FROM matches WHERE id = '$id'");
-$match = mysqli_fetch_assoc($query);
+// Récupérer les matchs
+$query = mysqli_query($link, "SELECT id, boxeur1, boxeur2, vainqueur, mode_victoire, date_combat, time, phase FROM matches ORDER BY id ASC");
+$matches = mysqli_fetch_all($query, MYSQLI_ASSOC);
 
-if (!$match) {
-    die("Match non trouvé.");
+// Organiser les matchs par phase
+$matchTree = [];
+foreach (["8eme", "quart", "demi", "finale"] as $phase) {
+    $matchTree[$phase] = array_values(array_filter($matches, fn($m) => $m['phase'] === $phase));
 }
 
-// Déterminer les vainqueurs des phases précédentes pour le pré-remplissage
-$prevPhase = null;
-switch ($match['phase']) {
-    case 'quart':
-        $prevPhase = '8eme';
-        break;
-    case 'demi':
-        $prevPhase = 'quart';
-        break;
-    case 'finale':
-        $prevPhase = 'demi';
-        break;
-}
-
-$boxeur1 = $match['boxeur1'] ?? '';
-$boxeur2 = $match['boxeur2'] ?? '';
-
-// Pré-remplir avec les vainqueurs des phases précédentes si les boxeurs ne sont pas définis
-if ($prevPhase) {
-    $queryWinners = mysqli_query($link, "SELECT vainqueur FROM matches WHERE phase = '$prevPhase' ORDER BY id ASC");
-    $winners = mysqli_fetch_all($queryWinners, MYSQLI_ASSOC);
+// Remplir les phases avec les vainqueurs des phases précédentes et mettre à jour la base de données
+$usedBoxers = [];
+foreach (["quart", "demi", "finale"] as $phase) {
+    $previousPhase = $phase === "quart" ? "8eme" : ($phase === "demi" ? "quart" : "demi");
+    $previousWinners = array_column(array_filter($matches, fn($m) => $m['phase'] === $previousPhase && $m['vainqueur']), 'vainqueur');
     
-    if (count($winners) >= 2) {
-        $boxeur1 = empty($boxeur1) ? ($winners[0]['vainqueur'] ?? '') : $boxeur1;
-        $boxeur2 = empty($boxeur2) ? ($winners[1]['vainqueur'] ?? '') : $boxeur2;
+    foreach ($matchTree[$phase] as &$match) {
+        $updated = false;
+        foreach (['boxeur1', 'boxeur2'] as $boxerKey) {
+            if (empty($match[$boxerKey]) || in_array($match[$boxerKey], $usedBoxers)) {
+                foreach ($previousWinners as $winner) {
+                    if (!in_array($winner, $usedBoxers)) {
+                        $match[$boxerKey] = $winner;
+                        $usedBoxers[] = $winner;
+                        $updated = true;
+                        break;
+                    }
+                }
+            } else {
+                $usedBoxers[] = $match[$boxerKey];
+            }
+        }
+        if ($updated) {
+            mysqli_query($link, "UPDATE matches SET boxeur1 = '{$match['boxeur1']}', boxeur2 = '{$match['boxeur2']}' WHERE id = {$match['id']}");
+        }
     }
 }
 
-// Récupérer la liste des boxeurs pour les 8èmes de finale
-$queryBoxeurs = mysqli_query($link, "SELECT nom FROM boxeurs");
-$boxeurs = mysqli_fetch_all($queryBoxeurs, MYSQLI_ASSOC);
+// Afficher le tournoi
+function generateTournament($matchTree, $phase) {
+    if (!isset($matchTree[$phase])) return;
 
-// Gérer la mise à jour des informations
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $boxeur1 = $_POST['boxeur1'] ?? $boxeur1;
-    $boxeur2 = $_POST['boxeur2'] ?? $boxeur2;
-    $date = $_POST['date'] ?? '';
-    $time = $_POST['time'] ?? '';
-    
-    $updateQuery = "UPDATE matches SET boxeur1 = '$boxeur1', boxeur2 = '$boxeur2', date_combat = '$date', time = '$time' WHERE id = '$id'";
-    mysqli_query($link, $updateQuery);
-    header("Location: tournoi_admin.php");
-    exit;
+    echo "<div class='round round-$phase'>";
+    foreach ($matchTree[$phase] as $match) {
+        $id = $match['id'];
+        $boxeur1 = htmlspecialchars($match['boxeur1'] ?? 'En attente');
+        $boxeur2 = htmlspecialchars($match['boxeur2'] ?? 'En attente');
+        $date = htmlspecialchars($match['date_combat'] ?? 'À définir');
+        $time = htmlspecialchars($match['time'] ?? 'À définir');
+        
+        echo "<div class='match'>
+                <div class='boxer'>$boxeur1</div>
+                <div class='boxer'>$boxeur2</div>
+                <div class='date'>Date: $date - Heure: $time</div>
+                <form action='edit_admin.php' method='get'>
+                    <input type='hidden' name='id' value='$id'>
+                    <input type='hidden' name='boxeur1' value='$boxeur1'>
+                    <input type='hidden' name='boxeur2' value='$boxeur2'>
+                    <button type='submit'>Modifier</button>
+                </form>
+              </div>";
+    }
+    echo "</div>";
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<meta charset="UTF-8">
+    <title>Admin - WBSS</title>
+    <link rel="stylesheet" href="admin.css">
+    <a href="accueil.php" class="btn-home">Retour à l'Accueil</a>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="edit_admin.css">
-    <title>Modifier le Match</title>
+    <title>Tournoi de Boxe - Administrateur</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .tournament-container { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; }
+        .round { display: flex; flex-direction: column; margin: 20px; padding: 10px; }
+        .match { margin: 10px 0; padding: 10px; background: #eee; border-radius: 5px; text-align: center; }
+        .boxer { margin: 5px; padding: 5px; border: 1px solid #000; background: #fff; }
+        .date { font-size: 0.9em; color: gray; }
+    </style>
 </head>
 <body>
-    <h1>Modifier le Match</h1>
+    <h1>Tournoi de Boxe - Interface Administrateur</h1>
     <form method="post">
-        <label>Boxeur 1:</label>
-        <?php if ($match['phase'] === '8eme'): ?>
-            <select name="boxeur1" required>
-                <option value="">Sélectionner un boxeur</option>
-                <?php foreach ($boxeurs as $boxeur): ?>
-                    <option value="<?= htmlspecialchars($boxeur['nom']) ?>" <?= ($boxeur['nom'] == $boxeur1) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($boxeur['nom']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        <?php else: ?>
-            <!-- Afficher le boxeur pour les autres phases -->
-            <input type="text" name="boxeur1" value="<?= htmlspecialchars($boxeur1 ?? '') ?>" readonly>
-        <?php endif; ?>
-        
-        <label>Boxeur 2:</label>
-        <?php if ($match['phase'] === '8eme'): ?>
-            <select name="boxeur2" required>
-                <option value="">Sélectionner un boxeur</option>
-                <?php foreach ($boxeurs as $boxeur): ?>
-                    <option value="<?= htmlspecialchars($boxeur['nom']) ?>" <?= ($boxeur['nom'] == $boxeur2) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($boxeur['nom']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        <?php else: ?>
-            <!-- Afficher le boxeur pour les autres phases -->
-            <input type="text" name="boxeur2" value="<?= htmlspecialchars($boxeur2 ?? '') ?>" readonly>
-        <?php endif; ?>
-        
-        <br>
-        <label>Date:</label>
-        <input type="date" name="date" value="<?= htmlspecialchars($match['date_combat'] ?? '') ?>" required>
-        
-        <label>Heure:</label>
-        <input type="time" name="time" value="<?= htmlspecialchars($match['time'] ?? '') ?>" required>
-        
-        <br>
-        <button type="submit">Enregistrer</button>
+        <button type="submit" name="init_tournoi">Initialiser le Tournoi</button>
     </form>
-    <a href="tournoi_admin.php">Retour</a>
+    <div class="tournament-container">
+        <?php foreach (["8eme", "quart", "demi", "finale"] as $phase) generateTournament($matchTree, $phase); ?>
+    </div>
 </body>
 </html>
