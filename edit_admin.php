@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $updateQuery = "UPDATE matches SET boxeur1 = '$boxeur1', boxeur2 = '$boxeur2', date_combat = '$date', time = '$time' WHERE id = '$id'";
     mysqli_query($link, $updateQuery);
-    header("Location: tournoi_admin.php");
+    header("Location: admin.php");
     exit;
 }
 ?>
@@ -112,6 +112,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <br>
         <button type="submit">Enregistrer</button>
     </form>
-    <a href="tournoi_admin.php">Retour</a>
+    <a href="admin.php">Retour</a>
 </body>
 </html>
