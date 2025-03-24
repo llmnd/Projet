@@ -10,10 +10,8 @@ if (isset($_GET['id'])) {
     $boxeur_id = $_GET['id'];
 
     // Récupérer les statistiques du boxeur
-    $query = "SELECT b.nom, s.victoires, s.defaites, s.KO, s.decision, s.abandon, s.TKO 
-              FROM boxeurs b
-              LEFT JOIN stats s ON b.id = s.boxeur_id
-              WHERE b.id = ?";
+    $query = "SELECT nom, victoires, defaites, KO, abandon, TKO 
+              FROM stats WHERE id = ?";
     $stmt = $mysqli->prepare($query);
     $stmt->bind_param("i", $boxeur_id);
     $stmt->execute();
@@ -25,21 +23,18 @@ if (isset($_GET['id'])) {
         $victoires = $row['victoires'] ?: 0;
         $defaites = $row['defaites'] ?: 0;
         $KO = $row['KO'] ?: 0;
-        $decision = $row['decision'] ?: 0;
         $abandon = $row['abandon'] ?: 0;
         $TKO = $row['TKO'] ?: 0;
     } else {
         $nom = "Inconnu";
-        $victoires = $defaites = $KO = $decision = $abandon = $TKO = 0;
+        $victoires = $defaites = $KO = $abandon = $TKO = 0;
     }
 
     $stmt->close();
 } else {
     // Par défaut, afficher tous les boxeurs
-    $query = "SELECT b.id, b.nom, s.victoires, s.defaites, s.KO, s.decision, s.abandon, s.TKO 
-              FROM boxeurs b
-              LEFT JOIN stats s ON b.id = s.boxeur_id
-              ORDER BY b.nom ASC";
+    $query = "SELECT id, nom, victoires, defaites, KO, abandon, TKO 
+              FROM stats ORDER BY nom ASC";
     $result = $mysqli->query($query);
 }
 
@@ -68,7 +63,6 @@ if (isset($_GET['id'])) {
             <tr><td>Victoires</td><td><?php echo $victoires; ?></td></tr>
             <tr><td>Défaites</td><td><?php echo $defaites; ?></td></tr>
             <tr><td>KO</td><td><?php echo $KO; ?></td></tr>
-            <tr><td>Décision</td><td><?php echo $decision; ?></td></tr>
             <tr><td>Abandon</td><td><?php echo $abandon; ?></td></tr>
             <tr><td>TKO</td><td><?php echo $TKO; ?></td></tr>
         </table>
@@ -84,7 +78,6 @@ if (isset($_GET['id'])) {
                     <th>Victoires</th>
                     <th>Défaites</th>
                     <th>KO</th>
-                    <th>Décision</th>
                     <th>Abandon</th>
                     <th>TKO</th>
                     <th>Voir</th>
@@ -99,7 +92,6 @@ if (isset($_GET['id'])) {
                         echo "<td>" . ($row['victoires'] ?: 0) . "</td>";
                         echo "<td>" . ($row['defaites'] ?: 0) . "</td>";
                         echo "<td>" . ($row['KO'] ?: 0) . "</td>";
-                        echo "<td>" . ($row['decision'] ?: 0) . "</td>";
                         echo "<td>" . ($row['abandon'] ?: 0) . "</td>";
                         echo "<td>" . ($row['TKO'] ?: 0) . "</td>";
                         echo "<td><a href='stats.php?id=" . $row['id'] . "' class='btn-view'>Voir</a></td>";
