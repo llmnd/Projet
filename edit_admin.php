@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <br>
         <label>Date:</label>
-        <input type="date" name="date" value="<?= htmlspecialchars($match['date'] ?? '') ?>" required>
+        <input type="date" name="date" value="<?= htmlspecialchars($match['date_combat'] ?? '') ?>" required>
         
         <label>Heure:</label>
         <input type="time" name="time" value="<?= htmlspecialchars($match['time'] ?? '') ?>" required>
