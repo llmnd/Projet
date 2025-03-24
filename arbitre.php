@@ -1,90 +1,60 @@
 <?php
+session_start();
+require 'db.php';
 
-$mysqli = new mysqli("localhost", "root", "", "WBSS");
+// Récupérer les matchs
+$query = mysqli_query($link, "SELECT id, boxeur1, boxeur2, vainqueur, mode_victoire, date_combat, time, phase FROM matches ORDER BY id ASC");
+$matches = mysqli_fetch_all($query, MYSQLI_ASSOC);
 
-if ($mysqli->connect_error) {
-    die("Connexion échouée: " . $mysqli->connect_error);
+// Organiser les matchs par phase
+$matchTree = [];
+foreach (["8eme", "quart", "demi", "finale"] as $phase) {
+    $matchTree[$phase] = array_values(array_filter($matches, fn($m) => $m['phase'] === $phase));
 }
 
-// Récupérer les matchs non terminés
-$query = "SELECT t.id, b1.nom AS boxeur1, b2.nom AS boxeur2, t.date_combat, t.boxeur1_id, t.boxeur2_id 
-          FROM tournoi t
-          JOIN boxeurs b1 ON t.boxeur1_id = b1.id
-          JOIN boxeurs b2 ON t.boxeur2_id = b2.id
-          WHERE t.termine = 0
-          ORDER BY t.date_combat ASC";
-$result = $mysqli->query($query);
-
-// Gérer la soumission du formulaire
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['enregistrer_et_passer_demi_finale'])) {
-        enregistrerEtPasserAuxDemiFinales($mysqli, $_POST['gagnants'], $_POST['methodes'], $_POST['stats']);
-    }
-}
-
-function enregistrerEtPasserAuxDemiFinales($mysqli, $gagnants, $methodes, $stats) {
-    // Marquer tous les matchs de round comme terminés et enregistrer les gagnants
-    foreach ($gagnants as $match_id => $gagnant_id) {
-        $methode_victoire = $methodes[$match_id];
-        $mysqli->query("UPDATE tournoi SET gagnant_id = $gagnant_id, termine = 1 WHERE id = $match_id");
-
-        // Mettre à jour les statistiques du boxeur gagnant
-        $update_stats_query = "UPDATE stats SET victoires = victoires + 1, $methode_victoire = $methode_victoire + 1 WHERE boxeur_id = $gagnant_id";
-        $mysqli->query($update_stats_query);
-
-        // Mettre à jour les statistiques du boxeur perdant
-        $perdant_id = $gagnant_id == $_POST['boxeur1_id'][$match_id] ? $_POST['boxeur2_id'][$match_id] : $_POST['boxeur1_id'][$match_id];
-        $update_stats_query = "UPDATE stats SET defaites = defaites + 1 WHERE boxeur_id = $perdant_id";
-        $mysqli->query($update_stats_query);
-
-        // Mettre à jour les statistiques supplémentaires
-        foreach ($stats[$match_id] as $stat => $value) {
-            if (!empty($value)) {
-                $update_stats_query = "UPDATE stats SET $stat = $stat + $value WHERE boxeur_id = $gagnant_id";
-                $mysqli->query($update_stats_query);
+// Remplir les phases avec les vainqueurs des phases précédentes
+$usedBoxers = [];
+foreach (["quart", "demi", "finale"] as $phase) {
+    $previousPhase = $phase === "quart" ? "8eme" : ($phase === "demi" ? "quart" : "demi");
+    $previousWinners = array_column(array_filter($matches, fn($m) => $m['phase'] === $previousPhase && $m['vainqueur']), 'vainqueur');
+    
+    foreach ($matchTree[$phase] as &$match) {
+        foreach (['boxeur1', 'boxeur2'] as $boxerKey) {
+            if (empty($match[$boxerKey]) || in_array($match[$boxerKey], $usedBoxers)) {
+                foreach ($previousWinners as $winner) {
+                    if (!in_array($winner, $usedBoxers)) {
+                        $match[$boxerKey] = $winner;
+                        $usedBoxers[] = $winner;
+                        break;
+                    }
+                }
+            } else {
+                $usedBoxers[] = $match[$boxerKey];
             }
         }
     }
+}
 
-    // Récupérer les gagnants des matchs de round
-    $result = $mysqli->query("SELECT gagnant_id FROM tournoi WHERE type = 'round' AND termine = 1");
-    $gagnants = [];
-    while ($row = $result->fetch_assoc()) {
-        $gagnants[] = $row['gagnant_id'];
+// Fonction pour afficher le tournoi
+function generateTournament($matchTree, $currentPhase, $editPage) {
+    if (!isset($matchTree[$currentPhase])) return;
+
+    echo "<div class='round round-$currentPhase'>";
+    foreach ($matchTree[$currentPhase] as $match) {
+        $id = $match['id'];
+        $boxeur1 = htmlspecialchars($match['boxeur1'] ?? 'En attente');
+        $boxeur2 = htmlspecialchars($match['boxeur2'] ?? 'En attente');
+        $date = htmlspecialchars($match['date_combat'] ?? 'À définir');
+        $time = htmlspecialchars($match['time'] ?? 'À définir');
+        
+        echo "<div class='match'>
+                <div class='boxer'>$boxeur1</div>
+                <div class='boxer'>$boxeur2</div>
+                <div class='date'>Date: $date - Heure: $time</div>
+                <button onclick=\"location.href='$editPage?id=$id'\">Modifier</button>
+              </div>";
     }
-
-    if (count($gagnants) < 2) {
-        echo "<p style='color: red;'>Il faut au moins 2 gagnants pour passer aux demi-finales.</p>";
-        return;
-    }
-
-    // Ajouter les matchs de demi-finale
-    $boxeurs_utilises = [];
-    for ($i = 0; $i < count($gagnants) - 1; $i += 2) {
-        $boxeur1_id = $gagnants[$i];
-        $boxeur2_id = $gagnants[$i + 1];
-
-        // Vérifier si les boxeurs sont différents et non utilisés
-        if ($boxeur1_id == $boxeur2_id || in_array($boxeur1_id, $boxeurs_utilises) || in_array($boxeur2_id, $boxeurs_utilises)) {
-            continue;
-        }
-
-        $date_combat = date('Y-m-d H:i:s');
-        $stmt = $mysqli->prepare("INSERT INTO tournoi (ronde, boxeur1_id, boxeur2_id, date_combat, type) VALUES (2, ?, ?, ?, 'semi_finale')");
-        $stmt->bind_param("iis", $boxeur1_id, $boxeur2_id, $date_combat);
-        $stmt->execute();
-
-        // Marquer les boxeurs comme utilisés
-        $boxeurs_utilises[] = $boxeur1_id;
-        $boxeurs_utilises[] = $boxeur2_id;
-    }
-
-    // Supprimer les matchs de round
-    $mysqli->query("DELETE FROM tournoi WHERE type = 'round'");
-
-    // Rediriger vers la page des demi-finales
-    header("Location: demi_finale.php");
-    exit();
+    echo "</div>";
 }
 ?>
 
@@ -95,56 +65,24 @@ function enregistrerEtPasserAuxDemiFinales($mysqli, $gagnants, $methodes, $stats
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arbitre - Validation des Matchs</title>
     <link rel="stylesheet" href="admin.css">
+    <title>Tournoi de Boxe</title>
+    <a href="accueil.php" class="btn-home">Retour à l'Accueil</a>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .tournament-container { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; }
+        .round { display: flex; flex-direction: column; margin: 20px; padding: 10px; }
+        .match { position: relative; margin: 10px 0; padding: 10px; background: #eee; border-radius: 5px; text-align: center; }
+        .boxer { margin: 5px; padding: 5px; border: 1px solid #000; background: #fff; }
+        .date { font-size: 0.9em; color: gray; }
+    </style>
 </head>
 <body>
-    <header>
-        <h3>Validation des Matchs</h3>
-        <nav>
-            <a href="logout.php">Se déconnecter</a>
-            <a href="accueil.php" class="btn-home">Retour à l'Accueil</a>
-        </nav>
-    </header>
-    
-    <section>
-        <h3>Matchs en attente</h3>
-        <form method="post">
-            <?php 
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo "<div class='match'>";
-                    echo "<p><strong>" . $row['boxeur1'] . "</strong> VS <strong>" . $row['boxeur2'] . "</strong></p>";
-                    echo "<input type='hidden' name='boxeur1_id[" . $row['id'] . "]' value='" . $row['boxeur1_id'] . "'>";
-                    echo "<input type='hidden' name='boxeur2_id[" . $row['id'] . "]' value='" . $row['boxeur2_id'] . "'>";
-                    echo "<label>Vainqueur :</label>";
-                    echo "<select name='gagnants[" . $row['id'] . "]' required>";
-                    echo "<option value=''>Sélectionner</option>";
-                    echo "<option value='" . $row['boxeur1_id'] . "'>" . $row['boxeur1'] . "</option>";
-                    echo "<option value='" . $row['boxeur2_id'] . "'>" . $row['boxeur2'] . "</option>";
-                    echo "</select>";
-                    echo "<label>Méthode de victoire :</label>";
-                    echo "<select name='methodes[" . $row['id'] . "]' required>";
-                    echo "<option value='KO'>KO</option>";
-                    echo "<option value='TKO'>TKO</option>";
-                    echo "<option value='decision'>Décision</option>";
-                    echo "<option value='abandon'>Abandon</option>";
-                    echo "</select>";
-                    echo "<label>Statistiques supplémentaires :</label>";
-                    echo "<input type='number' name='stats[" . $row['id'] . "][KO]' placeholder='KO' min='0'>";
-                    echo "<input type='number' name='stats[" . $row['id'] . "][TKO]' placeholder='TKO' min='0'>";
-                    echo "<input type='number' name='stats[" . $row['id'] . "][decision]' placeholder='Décision' min='0'>";
-                    echo "<input type='number' name='stats[" . $row['id'] . "][abandon]' placeholder='Abandon' min='0'>";
-                    echo "</div><hr>";
-                }
-            } else {
-                echo "<p>Aucun match en attente.</p>";
-            }
-            ?>
-            <button type="submit" name="enregistrer_et_passer_demi_finale">Tout Enregistrer et Passer aux Demi-finales</button>
-        </form>
-    </section>
+    <h1>Tournoi de Boxe</h1>
+    <div class="tournament-container">
+        <?php 
+        $editPage = basename($_SERVER['PHP_SELF']) === 'test_tournoi.php' ? 'edit_arbitre.php' : 'edit_admin.php';
+        foreach (["8eme", "quart", "demi", "finale"] as $phase) generateTournament($matchTree, $phase, $editPage); 
+        ?>
+    </div>
 </body>
 </html>
-
-<?php
-$mysqli->close();
-?>
