@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['init_tournoi'])) {
             mysqli_stmt_execute($stmt);
         }
     }
-    header('Location: tournoi_admin.php');
+    header('Location: admin.php');
     exit;
 }
 
