@@ -1,0 +1,212 @@
+/* Styles généraux */
+@font-face {
+    font-family: 'Bell MT';
+    src: url('fonts/BellMT.woff2') format('woff2'),
+         url('fonts/BellMT.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: 'Bell MT', sans-serif;
+    background: linear-gradient(135deg, #6d2626, #000000);
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    text-align: center;
+}
+
+/* Header */
+header {
+    background: linear-gradient(135deg, #842f2f, #000000);
+    padding: 10px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+header h3 {
+    margin: 0;
+    font-size: 36px;
+    color: #c5c5c5;
+    animation: fadeInDown 1s ease-in-out;
+}
+
+/* Navigation */
+nav {
+    margin-top: 10px;
+}
+
+nav a {
+    color: #fff;
+    text-decoration: none;
+    margin: 0 15px;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+nav a:hover {
+    color: #e74c3c;
+}
+
+/* Sections */
+section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px auto;
+    width: 80%;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+h2, h3 {
+    color: #c5c5c5;
+    text-transform: uppercase;
+}
+
+/* Grille pour les boutons et formulaires */
+form {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+form button {
+    width: auto;
+    min-width: 12px;
+    flex-grow: 1;
+}
+
+/* Boutons */
+button {
+    background: #542e45;
+    color: black;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #593157;
+    transform: scale(1.05);
+}
+
+/* Tableaux */
+table {
+    width: 90%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    table-layout: fixed;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+th, td {
+    border: 1px solid rgb(63, 29, 29);
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background: #7a4b66;
+    color: black;
+}
+
+td {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Formulaires */
+select, input[type='text'], input[type="datetime-local"] {
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    margin: 10px;
+    width: 100px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* Styling pour les champs de date */
+input[type="datetime-local"] {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+input[type="datetime-local"]:focus {
+    background: rgba(255, 255, 255, 0.3);
+    outline: none;
+}
+
+/* Footer */
+footer {
+    margin-top: 20px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+}
+
+/* Styling pour les boutons de soumission */
+button[type='submit'] {
+    margin-top: 10px;
+    width: auto;
+    min-width: 120px;
+}
+
+/* Empêcher le survol des options avec une couleur bleue par défaut */
+select, option {
+    background-color: white;
+    color: black;
+}
+
+select:hover, option:hover {
+    background-color: #f0f0f0;
+    color: black;
+}
+
+select:focus, option:focus {
+    background-color: #f0f0f0;
+    color: black;
+}
+
+/* Vous pouvez ajouter aussi un style pour le bouton de sélection si nécessaire */
+button {
+    background-color: #76425d;
+    color: white;
+}
+
+/* Bouton de retour à l'accueil */
+.btn-home {
+    display: inline-block;
+    background-color: #7d3a59;
+    color: white;
+    padding: 10px 20px;
+    margin-top: 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.btn-home:hover {
+    background-color: #2c0f21;
+}
+
+
+
+
+
+
+
+
+
