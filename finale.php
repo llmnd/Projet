@@ -6,6 +6,17 @@ if ($mysqli->connect_error) {
     die("Connexion échouée: " . $mysqli->connect_error);
 }
 
+// Vérifier si un gagnant du tournoi existe
+$winner_query = "SELECT b.nom AS gagnant 
+                 FROM tournoi t
+                 JOIN boxeurs b ON t.gagnant_id = b.id
+                 WHERE t.gagnant_id IS NOT NULL
+                 GROUP BY t.gagnant_id
+                 ORDER BY COUNT(t.gagnant_id) DESC
+                 LIMIT 1";
+$winner_result = $mysqli->query($winner_query);
+$winner = $winner_result->fetch_assoc();
+
 // Récupérer les matchs de finale non terminés
 $query = "SELECT t.id, b1.nom AS boxeur1, b2.nom AS boxeur2, t.date_combat, t.boxeur1_id, t.boxeur2_id 
           FROM tournoi t
@@ -17,8 +28,13 @@ $result = $mysqli->query($query);
 
 // Gérer la soumission du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['enregistrer_et_passer_gagnant'])) {
-        enregistrerEtPasserAuGagnant($mysqli, $_POST['rounds'], $_POST['methodes'], $_POST['winners']);
+    if ($winner) {
+        // Si un gagnant existe déjà, afficher un message d'erreur
+        echo "<p style='color: red; text-align: center;'>Un gagnant du tournoi existe déjà : <strong>" . $winner['gagnant'] . "</strong>. Veuillez réinitialiser le tournoi avant de continuer.</p>";
+    } else {
+        if (isset($_POST['enregistrer_et_passer_gagnant'])) {
+            enregistrerEtPasserAuGagnant($mysqli, $_POST['rounds'], $_POST['methodes'], $_POST['winners']);
+        }
     }
 }
 
