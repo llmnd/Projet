@@ -194,6 +194,7 @@ $arbitres = $mysqli->query("SELECT id, username FROM arbitres");
     <meta charset="UTF-8">
     <title>Admin - WBSS</title>
     <link rel="stylesheet" href="admin.css">
+    <a href="logout.php" class="btn-home">Se déconnecter</a>
     <a href="accueil.php" class="btn-home">Retour à l'Accueil</a>
 </head>
 <body>
