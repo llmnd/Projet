@@ -6,7 +6,7 @@ if ($mysqli->connect_error) {
     die("Connexion échouée: " . $mysqli->connect_error);
 }
 
-// Récupérer les matchs de demi-finale non terminés
+// Récupérer les matchs de demi finale non terminés
 $query = "SELECT t.id, b1.nom AS boxeur1, b2.nom AS boxeur2, t.date_combat, t.boxeur1_id, t.boxeur2_id 
           FROM tournoi t
           JOIN boxeurs b1 ON t.boxeur1_id = b1.id
