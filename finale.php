@@ -112,6 +112,7 @@ function enregistrerEtPasserAuGagnant($mysqli, $rounds, $methodes, $winners) {
     <header>
         <h3>Finale</h3>
         <nav>
+            <a href="logout.php" class="btn-home">Se déconnecter</a>
             <a href="accueil.php" class="btn-home">Retour à l'Accueil</a>
         </nav>
     </header>
