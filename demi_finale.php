@@ -32,19 +32,33 @@ function enregistrerEtPasserAuxFinales($mysqli, $gagnants, $methodes) {
         echo "<p style='color: red; text-align: center;'>Aucun match à traiter. Veuillez vérifier les données soumises.</p>";
         return;
     }
-    // Marquer tous les matchs de demi-finale comme terminés et enregistrer les gagnants
+
     foreach ($gagnants as $match_id => $gagnant_id) {
+        if (empty($gagnant_id) || !isset($methodes[$match_id])) {
+            echo "<p style='color: red;'>Erreur : Données manquantes pour le match ID $match_id. Veuillez vérifier les gagnants et les méthodes de victoire.</p>";
+            return;
+        }
+
         $methode_victoire = $methodes[$match_id];
         $mysqli->query("UPDATE tournoi SET gagnant_id = $gagnant_id, termine = 1 WHERE id = $match_id");
-
-        // Mettre à jour les statistiques du boxeur gagnant
-        $update_stats_query = "UPDATE boxeur_stats SET victoires = victoires + 1, $methode_victoire = $methode_victoire + 1 WHERE boxeur_id = $gagnant_id";
-        $mysqli->query($update_stats_query);
 
         // Récupérer l'ID du perdant
         $result = $mysqli->query("SELECT boxeur1_id, boxeur2_id FROM tournoi WHERE id = $match_id");
         $row = $result->fetch_assoc();
+        if (!$row) {
+            echo "<p style='color: red;'>Erreur : Impossible de récupérer les données pour le match ID $match_id.</p>";
+            return;
+        }
+
         $perdant_id = ($row['boxeur1_id'] == $gagnant_id) ? $row['boxeur2_id'] : $row['boxeur1_id'];
+        if (empty($perdant_id)) {
+            echo "<p style='color: red;'>Erreur : Données manquantes pour le perdant du match ID $match_id.</p>";
+            return;
+        }
+
+        // Mettre à jour les statistiques du boxeur gagnant
+        $update_winner_stats_query = "UPDATE boxeur_stats SET victoires = victoires + 1, $methode_victoire = $methode_victoire + 1 WHERE boxeur_id = $gagnant_id";
+        $mysqli->query($update_winner_stats_query);
 
         // Mettre à jour les statistiques du boxeur perdant
         $update_loser_stats_query = "UPDATE boxeur_stats SET defaites = defaites + 1 WHERE boxeur_id = $perdant_id";
