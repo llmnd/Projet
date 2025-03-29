@@ -114,7 +114,7 @@ function enregistrerEtPasserAuxDemiFinales($mysqli, $gagnants, $methodes) {
     <header>
         <h3>Validation des Matchs</h3>
         <nav>
-            <a href="logout.php">Se déconnecter</a>
+            <a href="logout.php" class="btn-home">Se déconnecter</a>
             <a href="accueil.php" class="btn-home">Retour à l'Accueil</a>
         </nav>
     </header>
